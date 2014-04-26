@@ -1,12 +1,12 @@
 /*
- *  Copyright 2011 Peter Karich 
- * 
+ *  Copyright 2011 Peter Karich
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,6 +33,7 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.squareup.okhttp.OkHttpClient;
 
 /**
  * Class to fetch articles. This class is thread safe.
@@ -82,6 +83,7 @@ public class HtmlFetcher {
     private AtomicInteger cacheCounter = new AtomicInteger(0);
     private int maxTextLength = -1;
     private ArticleTextExtractor extractor = new ArticleTextExtractor();
+    private OkHttpClient client = new OkHttpClient();
     private Set<String> furtherResolveNecessary = new LinkedHashSet<String>() {
         {
             add("bit.ly");
@@ -302,7 +304,7 @@ public class HtmlFetcher {
             throws MalformedURLException, IOException {
         HttpURLConnection hConn = createUrlConnection(urlAsString, timeout, includeSomeGooseOptions);
         hConn.setInstanceFollowRedirects(true);
-        String encoding = hConn.getContentEncoding();        
+        String encoding = hConn.getContentEncoding();
         InputStream is;
         if (encoding != null && encoding.equalsIgnoreCase("gzip")) {
             is = new GZIPInputStream(hConn.getInputStream());
@@ -394,8 +396,8 @@ public class HtmlFetcher {
     protected HttpURLConnection createUrlConnection(String urlAsStr, int timeout,
             boolean includeSomeGooseOptions) throws MalformedURLException, IOException {
         URL url = new URL(urlAsStr);
-        //using proxy may increase latency
-        HttpURLConnection hConn = (HttpURLConnection) url.openConnection(Proxy.NO_PROXY);
+        HttpURLConnection hConn = client.open(url);
+
         hConn.setRequestProperty("User-Agent", userAgent);
         hConn.setRequestProperty("Accept", accept);
 
